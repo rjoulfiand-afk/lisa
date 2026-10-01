@@ -1,27 +1,58 @@
 <?php
-session_start();
+date_default_timezone_set('Asia/Jakarta');
 
-// Gunakan 127.0.0.1 alih-alih localhost untuk memastikan koneksi TCP/IP pada port custom berjalan lancar
-$host = '127.0.0.1';
-$db   = 'db_parkir';
-$user = 'root';
-$port = '3307';
-$pass = '';
+define('DB_HOST', '127.0.0.1');
+define('DB_PORT', '3306');
+define('DB_NAME', 'sasparkir'); 
+define('DB_USER', 'root');
+define('DB_PASS', '');
 
-try {
-    // Tambahkan parameter port=$port ke dalam string koneksi PDO di bawah ini
-    $pdo = new PDO("mysql:host=$host;port=$port;dbname=$db;charset=utf8", $user, $pass, [
-        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC
-    ]);
-} catch (PDOException $e) {
-    die("Koneksi Database Gagal: " . $e->getMessage());
+class Database {
+    private static ?Database $instance = null;
+    private PDO $pdo;
+
+    private function __construct() {
+        $dsn = "mysql:host=" . DB_HOST . ";port=" . DB_PORT . ";dbname=" . DB_NAME . ";charset=utf8mb4";
+        $options = [
+            PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
+            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+            PDO::ATTR_EMULATE_PREPARES   => false,
+        ];
+        try {
+            $this->pdo = new PDO($dsn, DB_USER, DB_PASS, $options);
+        } catch (PDOException $e) {
+            die('<div style="font-family:sans-serif;color:#c0392b;padding:20px;background:#fde8e8;border:1px solid #f8b4b4;border-radius:6px;margin:20px;">
+                <strong>Koneksi Database Gagal:</strong><br>' . htmlspecialchars($e->getMessage()) .
+                '<br><br><small>Pastikan MySQL XAMPP sudah berjalan dan database <strong>sasparkir</strong> sudah dibuat di phpMyAdmin.</small>
+            </div>');
+        }
+    }
+
+    public static function getInstance(): Database {
+        if (self::$instance === null) {
+            self::$instance = new self();
+        }
+        return self::$instance;
+    }
+
+    public function getPdo(): PDO {
+        return $this->pdo;
+    }
 }
 
-function checkAuth() {
-    if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== true) {
-        header("Location: login.php");
+function checkAuth(): void {
+    if (session_status() === PHP_SESSION_NONE) {
+        session_start();
+    }
+    if (empty($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== true) {
+        header('Location: ' . BASE_URL . 'index.php?page=login');
         exit;
     }
 }
-?>
+
+function redirect(string $url): void {
+    header('Location: ' . $url);
+    exit;
+}
+
+define('BASE_URL', '/joki/Parkir/');
