@@ -162,7 +162,6 @@ if (!function_exists('tgl_indo')) {
                         <tr>
                             <th style="width: 50px;">No</th>
                             <th>No. Plat</th>
-                            <th>Kode Tiket</th>
                             <th>Jenis</th>
                             <th>Waktu Masuk</th>
                             <th>Waktu Keluar</th>
@@ -175,7 +174,7 @@ if (!function_exists('tgl_indo')) {
                     <tbody class="text-center">
                         <?php if (empty($dataLaporan)): ?>
                             <tr>
-                                <td colspan="10" class="text-muted py-4">
+                                <td colspan="9" class="text-muted py-4">
                                     <i class="fa-solid fa-file-circle-xmark fa-2x mb-2 text-secondary opacity-50 d-block"></i>
                                     Tidak ada transaksi parkir pada tanggal ini.
                                 </td>
@@ -188,11 +187,6 @@ if (!function_exists('tgl_indo')) {
                                 <td class="text-muted"><?= $i + 1 ?></td>
                                 <td class="fw-bold text-dark">
                                     <?= htmlspecialchars($row['nomor_plat']) ?>
-                                </td>
-                                <td>
-                                    <span class="text-secondary font-monospace">
-                                        <?= htmlspecialchars($row['nomor_id'] ?? '-') ?>
-                                    </span>
                                 </td>
                                 <td>
                                     <?php if ($isR2): ?>
@@ -242,7 +236,7 @@ if (!function_exists('tgl_indo')) {
                     <?php if (!empty($dataLaporan)): ?>
                     <tfoot class="table-light">
                         <tr>
-                            <td colspan="7" class="text-end fw-bold">TOTAL PENDAPATAN :</td>
+                            <td colspan="6" class="text-end fw-bold">TOTAL PENDAPATAN :</td>
                             <td class="text-end fw-bold text-success fs-6">
                                 Rp <?= number_format($totalPendapatan, 0, ',', '.') ?>
                             </td>

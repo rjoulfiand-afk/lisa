@@ -1,20 +1,19 @@
 <?php
 /**
- * View: Cetak PDF
- * Ditampilkan saat index.php?page=cetak_pdf
+ * View: Cetak PDF / Print Laporan Harian
+ * Clean & Professional A4 Print Layout
  */
 if (session_status() === PHP_SESSION_NONE) session_start();
-checkAuth();
 
-$tanggal     = $_GET['tanggal'] ?? date('Y-m-d');
-$petugas     = $_SESSION['admin_nama'] ?? 'Petugas Parkir';
+$tanggal  = $_GET['tanggal'] ?? date('Y-m-d');
+$petugas  = $_SESSION['admin_nama'] ?? $_SESSION['nama_petugas'] ?? 'Petugas Parkir';
 
 $totalPendapatan = 0;
 $jmlSelesai = 0;
 foreach ($dataLaporan as $b) {
-    if ($b['status'] === 'selesai') { 
-        $totalPendapatan += $b['total_bayar']; 
-        $jmlSelesai++; 
+    if ($b['status'] === 'selesai') {
+        $totalPendapatan += (float)$b['total_bayar'];
+        $jmlSelesai++;
     }
 }
 $jmlTotal  = count($dataLaporan);
@@ -45,7 +44,7 @@ body {
     line-height: 1.35;
 }
 
-/* Toolbar navigasi hanya di layar */
+/* Toolbar (hanya di layar) */
 .no-print {
     background: #fff;
     border-bottom: 1px solid #e2e8f0;
@@ -62,95 +61,67 @@ body {
     border-radius: 4px;
     cursor: pointer;
 }
-.btn-cetak { background: #be185d; color: white; }
+.btn-cetak { background: #0f172a; color: #fff; }
 .btn-tutup { background: #e2e8f0; color: #334155; }
 .no-print span { font-size: 8.5pt; color: #64748b; }
 
-/* Kertas cetak A4 */
+/* Kertas A4 */
 .sheet {
     width: 210mm;
     margin: 14px auto;
-    padding: 14mm 14mm 12mm;
+    padding: 15mm;
     background: #fff;
     border: 1px solid #e2e8f0;
 }
 
 table { width: 100%; border-collapse: collapse; }
 
-/* Kop surat */
-.kop-logo {
-    width: 34pt; height: 34pt;
-    background: #be185d;
-    border-radius: 8pt;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
-    font-size: 17pt;
-    font-weight: 700;
-    vertical-align: middle;
-    margin-right: 10pt;
+/* Kop */
+.kop-title {
+    font-size: 14pt;
+    font-weight: bold;
+    text-transform: uppercase;
+    text-align: center;
+    padding-bottom: 2px;
 }
-.kop-title { font-size: 14pt; font-weight: 700; text-transform: uppercase; color: #be185d; }
-.kop-sub   { font-size: 9pt; color: #475569; }
-.kop-divider { border-top: 2px solid #be185d; margin: 8pt 0 10pt; }
+.kop-sub {
+    font-size: 9pt;
+    text-align: center;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #000;
+}
 
 /* Meta */
-.meta-table td {
-    font-size: 9pt; padding: 2.5pt 0; border: none; vertical-align: top;
-}
+.meta-table { margin: 12px 0; font-size: 9pt; }
+.meta-table td { padding: 2.5px 0; border: none; vertical-align: top; }
 
-/* Data Table */
-.data-table { margin-top: 6pt; }
+/* Tabel Data */
+.data-table { margin-top: 5px; }
 .data-table th {
-    background: #1e293b !important;
-    color: white !important;
+    background-color: #f2f2f2 !important;
+    font-weight: bold;
     font-size: 8.5pt;
-    font-weight: 700;
     text-align: center;
-    padding: 7pt 8pt;
-    border: 1px solid #334155;
+    padding: 7px 8px;
+    border: 1px solid #000;
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
 }
 .data-table td {
     font-size: 9pt;
-    padding: 6pt 8pt;
-    border: 1px solid #cbd5e1;
+    padding: 6px 8px;
+    border: 1px solid #000;
     vertical-align: middle;
-}
-.data-table tbody tr:nth-child(even) td {
-    background: #fdf2f8;
-    -webkit-print-color-adjust: exact;
-    print-color-adjust: exact;
-}
-.data-table tfoot td {
-    background: #fce7f3 !important;
-    font-weight: 700;
-    -webkit-print-color-adjust: exact;
-    print-color-adjust: exact;
 }
 
 .text-center { text-align: center; }
 .text-right  { text-align: right; }
-.fw-bold     { font-weight: 700; }
-.text-rose   { color: #be185d; }
-
-/* Badge inline */
-.kbadge {
-    display: inline-block;
-    font-size: 8pt;
-    font-weight: 700;
-    padding: 1.5pt 7pt;
-    border-radius: 10pt;
-}
-.kbadge-parkir  { background: #fffbeb; color: #92400e; }
-.kbadge-selesai { background: #ecfdf5; color: #065f46; }
+.fw-bold     { font-weight: bold; }
 
 @page { size: A4 portrait; margin: 0 !important; }
 
 @media print {
-    body { background: white !important; margin: 0 !important; }
+    body { background: #fff !important; margin: 0 !important; }
     .no-print { display: none !important; }
     .sheet { width: 100% !important; margin: 0 !important; border: none !important; }
 }
@@ -159,35 +130,27 @@ table { width: 100%; border-collapse: collapse; }
 <body>
 
 <div class="no-print">
-    <button class="btn-cetak" onclick="window.print()">
-        &#128438; Cetak / Simpan PDF
-    </button>
+    <button class="btn-cetak" onclick="window.print()">Cetak / Simpan PDF</button>
     <button class="btn-tutup" onclick="window.close()">Tutup Jendela</button>
     <span>Pilih <strong>Destination: Save as PDF</strong> pada dialog cetak.</span>
 </div>
 
 <div class="sheet">
     <!-- Kop Laporan -->
-    <table style="margin-bottom:2pt;">
-        <tr>
-            <td>
-                <span class="kop-logo">P</span>
-                <span class="kop-title">SiParkir</span>
-                <div class="kop-sub" style="margin-left:44pt;">Laporan Rekapitulasi Parkir Harian</div>
-            </td>
-        </tr>
+    <table>
+        <tr><td class="kop-title">Laporan Rekapitulasi Parkir Harian</td></tr>
+        <tr><td class="kop-sub">Sistem Informasi Pengelolaan Parkir Kendaraan Bermotor</td></tr>
     </table>
-    <hr class="kop-divider">
 
     <!-- Meta Info -->
-    <table class="meta-table" style="margin-bottom:10pt;">
+    <table class="meta-table">
         <tr>
-            <td style="width:22%;">Tanggal Laporan</td>
+            <td style="width:18%;">Tanggal Laporan</td>
             <td style="width:2%;">:</td>
-            <td style="width:40%;"><strong><?= tgl_indo_pdf($tanggal) ?></strong></td>
+            <td style="width:44%;"><strong><?= tgl_indo_pdf($tanggal) ?></strong></td>
             <td style="width:16%;">Waktu Cetak</td>
             <td style="width:2%;">:</td>
-            <td><?= date('d/m/Y H:i') ?> WIB</td>
+            <td style="width:18%;"><?= date('d/m/Y H:i') ?> WIB</td>
         </tr>
         <tr>
             <td>Total Kendaraan</td>
@@ -197,32 +160,26 @@ table { width: 100%; border-collapse: collapse; }
             <td>:</td>
             <td><?= htmlspecialchars($petugas) ?></td>
         </tr>
-        <tr>
-            <td>Total Pendapatan</td>
-            <td>:</td>
-            <td><strong class="text-rose">Rp <?= number_format($totalPendapatan, 0, ',', '.') ?></strong></td>
-            <td></td><td></td><td></td>
-        </tr>
     </table>
 
-    <!-- Tabel Data -->
+    <!-- Tabel Data Transaksi -->
     <table class="data-table">
         <thead>
             <tr>
-                <th style="width:5%">No</th>
-                <th style="width:16%">Nomor Plat</th>
-                <th style="width:14%">Jenis</th>
-                <th style="width:15%">Keterangan</th>
-                <th style="width:13%">Waktu Masuk</th>
-                <th style="width:13%">Waktu Keluar</th>
-                <th style="width:8%">Durasi</th>
-                <th style="width:16%">Total Pembayaran</th>
+                <th style="width:6%;">No</th>
+                <th style="width:17%;">Nomor Plat</th>
+                <th style="width:14%;">Jenis Kendaraan</th>
+                <th style="width:15%;">Waktu Masuk</th>
+                <th style="width:15%;">Waktu Keluar</th>
+                <th style="width:9%;">Durasi</th>
+                <th style="width:12%;">Status</th>
+                <th style="width:12%;">Total Bayar</th>
             </tr>
         </thead>
         <tbody>
             <?php if (empty($dataLaporan)): ?>
             <tr>
-                <td colspan="8" class="text-center" style="padding:18pt;color:#64748b;">
+                <td colspan="8" class="text-center" style="padding:20px; color:#666;">
                     Tidak ada transaksi kendaraan pada tanggal ini.
                 </td>
             </tr>
@@ -232,32 +189,21 @@ table { width: 100%; border-collapse: collapse; }
                 <td class="text-center"><?= $i + 1 ?></td>
                 <td class="text-center fw-bold"><?= htmlspecialchars($row['nomor_plat']) ?></td>
                 <td class="text-center"><?= $row['jenis_kendaraan'] === 'roda2' ? 'Roda 2' : 'Roda 4' ?></td>
-                <td class="text-center">
-                    <?php if ($row['status'] === 'parkir'): ?>
-                    <span class="kbadge kbadge-parkir">&darr; Parkir Masuk</span>
-                    <?php else: ?>
-                    <span class="kbadge kbadge-selesai">&uarr; Parkir Keluar</span>
-                    <?php endif; ?>
-                </td>
                 <td class="text-center"><?= date('d/m/Y H:i', strtotime($row['waktu_masuk'])) ?></td>
-                <td class="text-center">
-                    <?= $row['waktu_keluar'] ? date('d/m/Y H:i', strtotime($row['waktu_keluar'])) : '&mdash;' ?>
-                </td>
-                <td class="text-center">
-                    <?= $row['durasi_jam'] ? $row['durasi_jam'] . ' jam' : '&mdash;' ?>
-                </td>
+                <td class="text-center"><?= !empty($row['waktu_keluar']) ? date('d/m/Y H:i', strtotime($row['waktu_keluar'])) : '-' ?></td>
+                <td class="text-center"><?= !empty($row['durasi_jam']) ? $row['durasi_jam'] . ' jam' : '-' ?></td>
+                <td class="text-center"><?= $row['status'] === 'selesai' ? 'Selesai' : 'Parkir' ?></td>
                 <td class="text-right">
-                    <?= $row['status'] === 'selesai' && $row['total_bayar'] > 0
-                        ? 'Rp ' . number_format($row['total_bayar'], 0, ',', '.')
-                        : '&mdash;' ?>
+                    <?= ($row['status'] === 'selesai' && $row['total_bayar'] > 0) 
+                        ? 'Rp ' . number_format($row['total_bayar'], 0, ',', '.') 
+                        : '-' ?>
                 </td>
             </tr>
             <?php endforeach; ?>
-            <tr>
-                <td colspan="7" class="text-right fw-bold">TOTAL PENDAPATAN :</td>
-                <td class="text-right fw-bold text-rose">
-                    Rp <?= number_format($totalPendapatan, 0, ',', '.') ?>
-                </td>
+            <!-- Baris Total -->
+            <tr style="background-color:#f2f2f2; font-weight:bold;">
+                <td colspan="7" class="text-right">TOTAL PENDAPATAN :</td>
+                <td class="text-right">Rp <?= number_format($totalPendapatan, 0, ',', '.') ?></td>
             </tr>
             <?php endif; ?>
         </tbody>

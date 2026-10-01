@@ -1,4 +1,8 @@
 <?php
+/**
+ * Controller: ParkirController
+ * Menangani: dashboard, parkir_masuk, parkir_keluar, laporan, cetak_pdf, export_csv, hapus
+ */
 
 require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../models/ParkirModel.php';
@@ -11,6 +15,10 @@ class ParkirController {
         checkAuth();
         $this->model = new ParkirModel();
     }
+
+    // ============================================================
+    //  DASHBOARD
+    // ============================================================
     public function dashboard(): void {
         $statsMasuk      = $this->model->statsMasukHariIni();
         $statsAktif      = $this->model->statsAktifParkir();
@@ -21,6 +29,9 @@ class ParkirController {
         require_once __DIR__ . '/../views/dashboard.php';
     }
 
+    // ============================================================
+    //  PARKIR MASUK
+    // ============================================================
     public function parkirMasuk(): void {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $this->simpanMasuk();
@@ -48,15 +59,18 @@ class ParkirController {
         }
     }
 
+    // ============================================================
+    //  PARKIR KELUAR
+    // ============================================================
     public function parkirKeluar(): void {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $this->prosesKeluar();
             return;
         }
 
-        $kendaraan  = null;
-        $estimasi   = null;
-        $cariPlat   = '';
+        $kendaraan = null;
+        $estimasi  = null;
+        $cariPlat  = '';
 
         if (isset($_GET['cari_plat']) && trim($_GET['cari_plat']) !== '') {
             $cariPlat  = strtoupper(trim($_GET['cari_plat']));
@@ -87,9 +101,13 @@ class ParkirController {
         }
     }
 
-        public function laporan(): void {
-        $tanggal = $_GET['tanggal'] ?? date('Y-m-d');
+    // ============================================================
+    //  LAPORAN
+    // ============================================================
+    public function laporan(): void {
+        $tanggal     = $_GET['tanggal'] ?? date('Y-m-d');
         $dataLaporan = $this->model->getLaporan($tanggal);
+
         $totalPendapatan = 0;
         $totalSelesai    = 0;
         $totalMasih      = 0;
@@ -106,16 +124,20 @@ class ParkirController {
         require_once __DIR__ . '/../views/laporan.php';
     }
 
+    // ============================================================
+    //  CETAK PDF
+    // ============================================================
     public function cetak_pdf(): void {
-        $tanggal          = $_GET['tanggal'] ?? date('Y-m-d');
-        $dataLaporan      = $this->model->getLaporan($tanggal);
-        $totalPendapatan  = 0;
-        $totalSelesai     = 0;
-        $totalMasih       = 0;
+        $tanggal     = $_GET['tanggal'] ?? date('Y-m-d');
+        $dataLaporan = $this->model->getLaporan($tanggal);
+
+        $totalPendapatan = 0;
+        $totalSelesai    = 0;
+        $totalMasih      = 0;
 
         foreach ($dataLaporan as $row) {
             if ($row['status'] === 'selesai') {
-                $totalPendapatan += $row['total_bayar'];
+                $totalPendapatan += (float)$row['total_bayar'];
                 $totalSelesai++;
             } else {
                 $totalMasih++;
@@ -125,14 +147,17 @@ class ParkirController {
         require_once __DIR__ . '/../views/cetak_pdf.php';
     }
 
+        // ============================================================
+    //  EXPORT EXCEL (.xls)
+    // ============================================================
     public function export_csv(): void {
-        $tanggal          = $_GET['tanggal'] ?? date('Y-m-d');
-        $baris            = $this->model->getLaporan($tanggal);
-        $namaPetugas      = $_SESSION['admin_nama'] ?? 'Petugas Parkir';
+        $tanggal     = $_GET['tanggal'] ?? date('Y-m-d');
+        $baris       = $this->model->getLaporan($tanggal);
+        $namaPetugas = $_SESSION['admin_nama'] ?? $_SESSION['nama_petugas'] ?? 'Petugas Parkir';
 
         $totalPendapatan = 0;
         foreach ($baris as $b) {
-            if ($b['status'] === 'selesai') $totalPendapatan += $b['total_bayar'];
+            if ($b['status'] === 'selesai') $totalPendapatan += (float)$b['total_bayar'];
         }
 
         $filename = 'Laporan_Parkir_' . str_replace('-', '', $tanggal) . '.xls';
@@ -150,61 +175,72 @@ class ParkirController {
         echo '</x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]-->';
         echo '<style>
             table { border-collapse: collapse; font-family: Arial, sans-serif; font-size: 10pt; }
-            .th-head { background-color: #1e293b; color: #ffffff; border: 1px solid #000000; padding: 8px 10px; font-weight: bold; text-align: center; }
-            .td-data { border: 1px solid #000000; padding: 6px 10px; vertical-align: middle; }
-            .td-even { background-color: #f8fafc; }
-            .td-total { background-color: #f1f5f9; font-weight: bold; }
+            th { background-color: #1e293b; color: #ffffff; border: 1px solid #000; padding: 8px 10px; font-weight: bold; text-align: center; }
+            td { border: 1px solid #000; padding: 6px 10px; vertical-align: middle; }
             .text-center { text-align: center; }
             .text-right  { text-align: right; }
-            .text-green  { color: #16a34a; font-weight: bold; }
+            .total { background-color: #f1f5f9; font-weight: bold; }
         </style>';
         echo '</head><body>';
 
         echo '<table>';
-        echo '<colgroup>
-            <col width="50"><col width="140"><col width="130">
-            <col width="140"><col width="140"><col width="110"><col width="160">
-        </colgroup>';
+        // Lebar kolom anti ####
+        echo '<colgroup>';
+        echo '<col width="50">';   // No
+        echo '<col width="130">';  // Nomor Plat
+        echo '<col width="130">';  // Jenis Kendaraan
+        echo '<col width="80">';   // Waktu Masuk (jam saja)
+        echo '<col width="80">';   // Waktu Keluar (jam saja)
+        echo '<col width="70">';   // Durasi
+        echo '<col width="90">';   // Status
+        echo '<col width="150">';  // Total Bayar
+        echo '</colgroup>';
 
-        echo '<tr><td colspan="7" style="font-size:13pt;font-weight:bold;text-align:center;border:none;padding:6px 0;">LAPORAN TRANSAKSI PARKIR HARIAN</td></tr>';
-        echo '<tr><td colspan="7" style="text-align:center;border:none;font-size:9.5pt;color:#475569;">Tanggal Periode: ' . date('d F Y', strtotime($tanggal)) . '</td></tr>';
-        echo '<tr><td colspan="7" style="text-align:center;border:none;font-size:9pt;color:#64748b;">Petugas: ' . htmlspecialchars($namaPetugas) . ' &nbsp;|&nbsp; Waktu Unduh: ' . date('d/m/Y H:i') . ' WIB</td></tr>';
-        echo '<tr><td colspan="7" style="border:none;">&nbsp;</td></tr>';
+        // Header Laporan
+        echo '<tr><td colspan="8" style="font-size:13pt;font-weight:bold;text-align:center;border:none;">LAPORAN TRANSAKSI PARKIR HARIAN</td></tr>';
+        echo '<tr><td colspan="8" style="text-align:center;border:none;">Tanggal Periode: ' . date('d/m/Y', strtotime($tanggal)) . '</td></tr>';
+        echo '<tr><td colspan="8" style="text-align:center;border:none;font-size:9pt;color:#555;">Petugas: ' . htmlspecialchars($namaPetugas) . ' | Waktu Unduh: ' . date('d/m/Y H:i') . ' WIB</td></tr>';
+        echo '<tr><td colspan="8" style="border:none;">&nbsp;</td></tr>';
 
-        echo '<tr>
-            <td class="th-head">No</td>
-            <td class="th-head">Nomor Plat</td>
-            <td class="th-head">Jenis Kendaraan</td>
-            <td class="th-head">Waktu Masuk</td>
-            <td class="th-head">Waktu Keluar</td>
-            <td class="th-head">Status</td>
-            <td class="th-head">Total Bayar (Rp)</td>
-        </tr>';
+        // Header Tabel
+        echo '<tr>';
+        echo '<th>No</th>';
+        echo '<th>Nomor Plat</th>';
+        echo '<th>Jenis Kendaraan</th>';
+        echo '<th>Waktu Masuk</th>';
+        echo '<th>Waktu Keluar</th>';
+        echo '<th>Durasi</th>';
+        echo '<th>Status</th>';
+        echo '<th>Total Bayar (Rp)</th>';
+        echo '</tr>';
 
         $no = 1;
         foreach ($baris as $row) {
-            $even       = ($no % 2 === 0) ? ' td-even' : '';
-            $jenis      = $row['jenis_kendaraan'] === 'roda2' ? 'Roda 2 (Motor)' : 'Roda 4 (Mobil)';
-            $wMasuk     = date('H:i', strtotime($row['waktu_masuk']));
-            $wKeluar    = $row['waktu_keluar'] ? date('H:i', strtotime($row['waktu_keluar'])) : '-';
-            $status     = $row['status'] === 'selesai' ? 'Selesai' : 'Parkir';
-            $totalBayar = $row['status'] === 'selesai' ? number_format($row['total_bayar'], 0, ',', '.') : '0';
+            $jenis   = $row['jenis_kendaraan'] === 'roda2' ? 'Roda 2' : 'Roda 4';
+            $wMasuk  = date('H:i', strtotime($row['waktu_masuk']));
+            $wKeluar = !empty($row['waktu_keluar']) ? date('H:i', strtotime($row['waktu_keluar'])) : '-';
+            $durasi  = !empty($row['durasi_jam']) ? $row['durasi_jam'] . ' jam' : '-';
+            $status  = $row['status'] === 'selesai' ? 'Selesai' : 'Parkir';
+            $bayar   = ($row['status'] === 'selesai' && $row['total_bayar'] > 0)
+                       ? 'Rp ' . number_format($row['total_bayar'], 0, ',', '.') : '-';
 
-            echo '<tr>
-                <td class="td-data text-center' . $even . '">' . $no++ . '</td>
-                <td class="td-data text-center' . $even . '" style="font-weight:bold;">' . htmlspecialchars($row['nomor_plat']) . '</td>
-                <td class="td-data text-center' . $even . '">' . $jenis . '</td>
-                <td class="td-data text-center' . $even . '">' . $wMasuk . '</td>
-                <td class="td-data text-center' . $even . '">' . $wKeluar . '</td>
-                <td class="td-data text-center' . $even . '">' . $status . '</td>
-                <td class="td-data text-right' . $even . '">' . $totalBayar . '</td>
-            </tr>';
+            echo '<tr>';
+            echo '<td class="text-center">' . $no++ . '</td>';
+            echo '<td class="text-center" style="font-weight:bold;">' . htmlspecialchars($row['nomor_plat']) . '</td>';
+            echo '<td class="text-center">' . $jenis . '</td>';
+            echo '<td class="text-center">' . $wMasuk . '</td>';
+            echo '<td class="text-center">' . $wKeluar . '</td>';
+            echo '<td class="text-center">' . $durasi . '</td>';
+            echo '<td class="text-center">' . $status . '</td>';
+            echo '<td class="text-right">' . $bayar . '</td>';
+            echo '</tr>';
         }
 
-        echo '<tr>
-            <td colspan="6" class="td-total text-right">TOTAL PENDAPATAN :</td>
-            <td class="td-total text-right text-green">Rp ' . number_format($totalPendapatan, 0, ',', '.') . '</td>
-        </tr>';
+        // Baris Total
+        echo '<tr class="total">';
+        echo '<td colspan="7" class="text-right">TOTAL PENDAPATAN :</td>';
+        echo '<td class="text-right">Rp ' . number_format($totalPendapatan, 0, ',', '.') . '</td>';
+        echo '</tr>';
 
         echo '</table></body></html>';
         exit;
