@@ -161,20 +161,61 @@ class ParkirModel {
     /**
      * Ambil data laporan harian
      */
-    public function getLaporan(?string $tanggal = null): array {
-        if ($tanggal) {
+        public function getLaporan(?string $tanggal = null): array {
+        if (!empty($tanggal)) {
             $stmt = $this->pdo->prepare(
                 "SELECT * FROM parkir
-                 WHERE DATE(waktu_masuk) = ?
+                 WHERE DATE(waktu_masuk) = ? OR DATE(waktu_keluar) = ?
                  ORDER BY waktu_masuk DESC"
             );
-            $stmt->execute([$tanggal]);
+            $stmt->execute([$tanggal, $tanggal]);
         } else {
             $stmt = $this->pdo->query(
                 "SELECT * FROM parkir ORDER BY waktu_masuk DESC"
             );
         }
-        return $stmt->fetchAll();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+    /**
+     * Alias method untuk fleksibilitas controller
+     */
+    public function getLaporanByTanggal(string $tanggal): array {
+        return $this->getLaporan($tanggal);
+    }
+    /**
+     * Total pendapatan pada tanggal tertentu
+     */
+    public function totalPendapatanByTanggal(string $tanggal): float {
+        $stmt = $this->pdo->prepare(
+            "SELECT COALESCE(SUM(total_bayar), 0) FROM parkir 
+             WHERE (DATE(waktu_keluar) = ? OR (DATE(waktu_masuk) = ? AND status = 'selesai'))
+               AND status = 'selesai'"
+        );
+        $stmt->execute([$tanggal, $tanggal]);
+        return (float)$stmt->fetchColumn();
+    }
+    /**
+     * Total kendaraan selesai keluar pada tanggal tertentu
+     */
+    public function totalSelesaiByTanggal(string $tanggal): int {
+        $stmt = $this->pdo->prepare(
+            "SELECT COUNT(*) FROM parkir 
+             WHERE (DATE(waktu_keluar) = ? OR (DATE(waktu_masuk) = ? AND status = 'selesai'))
+               AND status = 'selesai'"
+        );
+        $stmt->execute([$tanggal, $tanggal]);
+        return (int)$stmt->fetchColumn();
+    }
+    /**
+     * Total kendaraan yang masih parkir (belum keluar)
+     */
+    public function totalMasihByTanggal(string $tanggal): int {
+        $stmt = $this->pdo->prepare(
+            "SELECT COUNT(*) FROM parkir 
+             WHERE DATE(waktu_masuk) = ? AND status = 'parkir'"
+        );
+        $stmt->execute([$tanggal]);
+        return (int)$stmt->fetchColumn();
     }
 
     // ============================================================

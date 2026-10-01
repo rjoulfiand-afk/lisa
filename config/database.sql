@@ -57,3 +57,11 @@ VALUES
 
 
 UPDATE admin SET password = 'admin123' WHERE username = 'admin';
+
+
+UPDATE parkir 
+SET waktu_masuk = CONCAT(CURDATE(), ' ', TIME(waktu_masuk)),
+    waktu_keluar = CASE 
+        WHEN waktu_keluar IS NOT NULL THEN CONCAT(CURDATE(), ' ', TIME(waktu_keluar))
+        ELSE NULL 
+    END;

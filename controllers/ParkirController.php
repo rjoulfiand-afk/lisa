@@ -87,16 +87,16 @@ class ParkirController {
         }
     }
 
-    public function laporan(): void {
-        $tanggal          = $_GET['tanggal'] ?? date('Y-m-d');
-        $dataLaporan      = $this->model->getLaporan($tanggal);
-        $totalPendapatan  = 0;
-        $totalSelesai     = 0;
-        $totalMasih       = 0;
+        public function laporan(): void {
+        $tanggal = $_GET['tanggal'] ?? date('Y-m-d');
+        $dataLaporan = $this->model->getLaporan($tanggal);
+        $totalPendapatan = 0;
+        $totalSelesai    = 0;
+        $totalMasih      = 0;
 
         foreach ($dataLaporan as $row) {
             if ($row['status'] === 'selesai') {
-                $totalPendapatan += $row['total_bayar'];
+                $totalPendapatan += (float)$row['total_bayar'];
                 $totalSelesai++;
             } else {
                 $totalMasih++;
